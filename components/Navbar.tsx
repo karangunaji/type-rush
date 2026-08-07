@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import type { Session } from "@supabase/supabase-js";
 import AuthModal from "@/components/AuthModal";
 
@@ -31,34 +31,55 @@ export default function Navbar() {
   useEffect(() => {
     let mounted = true;
     async function load() {
-      const { data } = await supabase.auth.getUser();
+      try {
+        const supabase = getSupabaseClient();
+        const { data } = await supabase.auth.getUser();
       if (!mounted) return;
       if (data?.user) {
         const meta = data.user.user_metadata as Record<string, unknown> | undefined;
         const name = meta && typeof meta.username === "string" ? (meta.username as string) : data.user.email ?? null;
         setUsername(name);
       }
+      } catch (err) {
+        // supabase not configured during prerender/build — ignore here
+        return;
+      }
     }
     load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
-      if (session?.user) {
-        const meta = session.user.user_metadata as Record<string, unknown> | undefined;
-        const name = meta && typeof meta.username === "string" ? (meta.username as string) : session.user.email ?? null;
-        setUsername(name);
-      } else {
-        setUsername(null);
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const supabase = getSupabaseClient();
+      const res = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+        if (session?.user) {
+          const meta = session.user.user_metadata as Record<string, unknown> | undefined;
+          const name = meta && typeof meta.username === "string" ? (meta.username as string) : session.user.email ?? null;
+          setUsername(name);
+        } else {
+          setUsername(null);
+        }
+      });
+      if (res && res.data && (res.data as any).subscription) {
+        subscription = (res.data as any).subscription;
       }
-    });
+    } catch (err) {
+      // ignore if supabase not configured at build/prerender
+      subscription = null;
+    }
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      // ignore if supabase not configured
+    }
     setUsername(null);
   };
 

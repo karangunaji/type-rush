@@ -28,10 +28,10 @@ export default function Hero({ onStart }: { onStart: (level: Level) => void }) {
         {levels.map((lvl) => (
           <div
             key={lvl.key}
-            className="group min-h-[15rem] rounded-2xl border border-surface bg-surface p-5 text-center transition duration-200 ease-out hover:border-accent hover:bg-surface-strong"
+            className="group min-h-60 rounded-2xl border border-surface bg-surface p-5 text-center transition duration-200 ease-out hover:border-accent hover:bg-surface-strong"
           >
             <p className="text-sm uppercase tracking-[0.18em] text-muted mt-7">{lvl.title}</p>
-            <p className="mt-2 text-sm text-muted whitespace-normal break-words">{lvl.desc}</p>
+            <p className="mt-2 text-sm text-muted whitespace-normal wrap-break-word">{lvl.desc}</p>
             <button
               onClick={() => onStart(lvl.key)}
               className="mt-4 inline-flex items-center justify-center rounded-3xl bg-accent px-4 py-2 text-sm font-semibold text-foreground hover:brightness-110 cursor-pointer"
