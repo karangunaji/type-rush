@@ -1,33 +1,41 @@
+'use client';
+import { useState } from "react";
 import TypingTest from "@/components/TypingTest";
+import Hero from "@/components/Hero";
+
+type Level = "low" | "medium" | "hard";
 
 export default function Home() {
+  const [started, setStarted] = useState(false);
+  const [level, setLevel] = useState<Level>("medium");
+
+  const handleStart = (lvl: Level) => {
+    setLevel(lvl);
+    setStarted(true);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
-        <header className="rounded-[2rem] border border-slate-700/80 bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-          <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-center">
-            <div>
-              <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">
-                Typing trainer
-              </p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-50 sm:text-5xl">
-                TypeRush
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                Train typing speed and accuracy with a modern, responsive challenge. Play anywhere on desktop, tablet, or mobile for fast improvement.
-              </p>
-            </div>
-            <div className="rounded-3xl bg-slate-800/90 p-6 text-center ring-1 ring-slate-700/70">
-              <p className="text-sm uppercase tracking-[0.2em] text-slate-400">60 sec session</p>
-              <p className="mt-4 text-3xl font-bold text-sky-400">Practice daily</p>
-              <p className="mt-3 text-sm leading-6 text-slate-400">
-                Get instant feedback on WPM, accuracy, mistakes, and typing flow.
-              </p>
-            </div>
-          </div>
-        </header>
+        {!started && <Hero onStart={handleStart} selected={level} />}
 
-        <TypingTest />
+        {started && (
+          <div className="relative">
+            <div className="mb-4">
+              <button
+                onClick={() => setStarted(false)}
+                className="inline-flex items-center gap-2 rounded-3xl border border-slate-700/80 bg-slate-800/80 px-3 py-2 text-sm text-slate-100 hover:bg-slate-800 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-100" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H16a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Back
+              </button>
+            </div>
+
+            <TypingTest level={level} />
+          </div>
+        )}
       </div>
     </main>
   );

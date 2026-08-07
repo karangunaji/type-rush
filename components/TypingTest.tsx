@@ -15,12 +15,16 @@ function countMistakes(original: string, typed: string) {
   return mistakes;
 }
 
-export default function TypingTest() {
-  const initialText = useMemo(() => generateText(), []);
+type Level = "low" | "medium" | "hard";
+
+export default function TypingTest({ level = "medium" }: { level?: Level }) {
+  const wordCountMap: Record<Level, number> = { low: 20, medium: 40, hard: 60 };
+  const initialText = useMemo(() => generateText(wordCountMap[level]), [level]);
   const [text, setText] = useState(initialText);
   const [input, setInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(TEST_DURATION);
   const [started, setStarted] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     if (!started || timeLeft <= 0) return;
@@ -32,6 +36,19 @@ export default function TypingTest() {
     return () => clearInterval(timer);
   }, [started, timeLeft]);
 
+  useEffect(() => {
+    // If user types the full text before the timer ends, stop the test
+    if (started && input.length >= text.length) {
+      setStarted(false);
+    }
+  }, [input, text, started]);
+
+  useEffect(() => {
+    if (timeLeft <= 0 || input.length >= text.length) {
+      setShowResults(true);
+    }
+  }, [timeLeft, input.length, text.length]);
+
   const handleChange = (value: string) => {
     if (!started) setStarted(true);
     if (timeLeft <= 0) return;
@@ -39,7 +56,7 @@ export default function TypingTest() {
   };
 
   const resetTest = () => {
-    const nextText = generateText();
+    const nextText = generateText(wordCountMap[level]);
     setText(nextText);
     setInput("");
     setTimeLeft(TEST_DURATION);
@@ -103,7 +120,7 @@ export default function TypingTest() {
           <textarea
             value={input}
             onChange={(e) => handleChange(e.target.value)}
-            disabled={timeLeft <= 0}
+            disabled={timeLeft <= 0 || input.length >= text.length}
             placeholder="Start typing here..."
             className="h-44 w-full resize-none rounded-3xl border border-slate-700/90 bg-slate-950/90 p-5 text-lg text-slate-100 outline-none transition focus:border-sky-500/90 focus:ring-2 focus:ring-sky-500/20 sm:h-64"
           />
@@ -123,13 +140,15 @@ export default function TypingTest() {
         </div>
       </div>
 
-      {started && timeLeft <= 0 && (
+      {showResults && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
           <div className="relative w-full max-w-xl rounded-[2rem] border border-slate-700/80 bg-slate-900/96 p-8 shadow-2xl shadow-slate-950/30">
             <div className="mb-6 text-center">
-              <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">Test Complete</p>
-              <h2 className="mt-4 text-3xl font-semibold text-slate-50">Session Results</h2>
+              <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">
+                {input.length >= text.length && timeLeft > 0 ? "Finished Early" : "Test Complete"}
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold text-slate-50">{input.length >= text.length && timeLeft > 0 ? "Congratulations!" : "Session Results"}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 Review your final typing performance and restart when you’re ready.
               </p>
@@ -169,8 +188,8 @@ export default function TypingTest() {
               </button>
               <button
                 type="button"
-                onClick={() => setStarted(false)}
-                className="rounded-3xl border border-slate-700/80 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
+                onClick={() => setShowResults(false)}
+                className="rounded-3xl border border-slate-700/80 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-800 cursor-pointer"
               >
                 Close
               </button>
