@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mode, setMode] = useState<"signup" | "login">("signup");
@@ -21,6 +21,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       // If the user provided a real email (contains @), use it directly.
       // Otherwise map username to a synthetic email so Supabase can manage auth, store username in user_metadata
       const email = username.includes("@") ? username : `${username}@typerush.local`;
+
+      const supabase = getSupabaseClient();
 
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
