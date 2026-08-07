@@ -3,6 +3,37 @@
 :root {
   --background: #020617;
   --foreground: #f8fafc;
+  --surface: rgba(15, 23, 42, 0.9);
+  --surface-strong: rgba(15, 23, 42, 0.96);
+  --surface-muted: rgba(15, 23, 42, 0.75);
+  --surface-alt: rgba(30, 41, 59, 0.95);
+  --border: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(148, 163, 184, 0.35);
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-strong: #0f172a;
+  --accent-muted: #7dd3fc;
+  --danger: #fb7185;
+  --success: #4ade80;
+  --warning: #a855f7;
+}
+
+[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: rgba(255, 255, 255, 0.95);
+  --surface-strong: rgba(248, 250, 252, 0.95);
+  --surface-muted: rgba(241, 245, 249, 0.95);
+  --surface-alt: rgba(226, 232, 240, 0.95);
+  --border: rgba(148, 163, 184, 0.25);
+  --border-strong: rgba(100, 116, 139, 0.35);
+  --muted: #64748b;
+  --accent: #0ea5e9;
+  --accent-strong: #ffffff;
+  --accent-muted: #bae6fd;
+  --danger: #ef4444;
+  --success: #16a34a;
+  --warning: #9d7cff;
 }
 
 @theme inline {
@@ -32,4 +63,86 @@ button,
 textarea,
 input {
   font: inherit;
+}
+
+.bg-surface {
+  background: var(--surface);
+}
+
+.bg-surface-strong {
+  background: var(--surface-strong);
+}
+
+.bg-surface-muted {
+  background: var(--surface-muted);
+}
+
+.bg-surface-alt {
+  background: var(--surface-alt);
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.border-surface {
+  border-color: var(--border);
+}
+
+.border-surface-strong {
+  border-color: var(--border-strong);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.bg-accent:hover {
+  filter: brightness(1.1);
+}
+
+.bg-success {
+  background-color: var(--success);
+  color: var(--accent-strong);
+}
+
+.bg-danger {
+  background-color: var(--danger);
+  color: var(--accent-strong);
+}
+
+.bg-warning {
+  background-color: var(--warning);
+  color: var(--accent-strong);
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-secondary {
+  background-color: var(--surface-strong);
+  color: var(--foreground);
+}
+
+.btn-secondary:hover {
+  filter: brightness(1.02);
+}
+
+.bg-background {
+  background: var(--background);
+}
+
+.bg-overlay {
+  background: rgba(0, 0, 0, 0.55);
 }
