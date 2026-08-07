@@ -2,7 +2,7 @@ import React from "react";
 
 type Level = "low" | "medium" | "hard" | "bhc";
 
-export default function Hero({ onStart, selected }: { onStart: (level: Level) => void; selected?: Level }) {
+export default function Hero({ onStart }: { onStart: (level: Level) => void }) {
   const levels: { key: Level; title: string; desc: string }[] = [
     { key: "low", title: "Low", desc: "Shorter prompts, easier pace." },
     { key: "medium", title: "Medium", desc: "Balanced challenge for practice." },
