@@ -23,7 +23,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       const email = username.includes("@") ? username : `${username}@typerush.local`;
 
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password }, { data: { username } });
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { username } } });
         if (error) throw error;
         setMessage("Signup successful — you are signed in or will receive a confirmation (if enabled).");
         onClose();
@@ -35,8 +35,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       if (error) throw error;
       setMessage("Signed in successfully");
       onClose();
-    } catch (err: any) {
-      setMessage(err?.message ?? String(err));
+    } catch (err: unknown) {
+      if (err instanceof Error) setMessage(err.message);
+      else setMessage(String(err));
     } finally {
       setLoading(false);
     }

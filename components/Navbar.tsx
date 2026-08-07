@@ -2,22 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import type { Session } from "@supabase/supabase-js";
 import AuthModal from "@/components/AuthModal";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-    useEffect(() => {
-      const storedTheme = window.localStorage.getItem("typeRushTheme");
-      if (storedTheme === "light" || storedTheme === "dark") {
-        setTheme(storedTheme);
-        return;
-      }
-
-      const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-      setTheme(prefersLight ? "light" : "dark");
-    }, []);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const stored = window.localStorage.getItem("typeRushTheme");
+    if (stored === "light" || stored === "dark") return stored as "light" | "dark";
+    const prefersLight = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches;
+    return prefersLight ? "light" : "dark";
+  });
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -38,15 +34,18 @@ export default function Navbar() {
       const { data } = await supabase.auth.getUser();
       if (!mounted) return;
       if (data?.user) {
-        // prefer metadata.username if available
-        setUsername((data.user.user_metadata as any)?.username ?? (data.user.email ?? null));
+        const meta = data.user.user_metadata as Record<string, unknown> | undefined;
+        const name = meta && typeof meta.username === "string" ? (meta.username as string) : data.user.email ?? null;
+        setUsername(name);
       }
     }
     load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       if (session?.user) {
-        setUsername((session.user.user_metadata as any)?.username ?? session.user.email ?? null);
+        const meta = session.user.user_metadata as Record<string, unknown> | undefined;
+        const name = meta && typeof meta.username === "string" ? (meta.username as string) : session.user.email ?? null;
+        setUsername(name);
       } else {
         setUsername(null);
       }
