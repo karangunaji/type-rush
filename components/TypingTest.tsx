@@ -77,6 +77,7 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   const finalStatus = finalMarks >= qualifyingMarks ? "PASS" : "FAIL";
   const typingTime = secondsElapsed;
   const passageWordCount = requiredWords;
+  const difficulty = level;
   const examName = level === "bhc" ? "BHC Clerk Typing Exam" : level === "bhcPa" ? "BHC PA Typing Exam" : level === "ahcRoAro" ? "AHC RO/ARO English Typing Exam" : level === "ahcEnglish" ? "AHC English Typing Exam" : "Typing Exam";
 
   const handleShare = async () => {
@@ -137,10 +138,16 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
           return;
         }
 
+        const profileMeta = session.user.user_metadata as Record<string, unknown> | undefined;
+        const historyUsername = profileMeta && typeof profileMeta.username === "string" ? profileMeta.username : "User";
+
         const { error } = await supabase.from("exam_history").insert([{
           user_id: session.user.id,
+          username: historyUsername,
           exam_name: examName,
+          difficulty,
           words_typed: wordsTyped,
+          correct_words: correctWords,
           accuracy,
           gross_speed: grossSpeed,
           net_speed: netSpeed,
@@ -161,7 +168,7 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
     };
 
     saveHistory();
-  }, [showResults, historySaved, examName, wordsTyped, accuracy, wpm, netSpeed, finalMarks, finalStatus]);
+  }, [showResults, historySaved, examName, wordsTyped, correctWords, accuracy, grossSpeed, netSpeed, finalMarks, finalStatus, difficulty]);
 
   const handleChange = (value: string) => {
     if (timeLeft <= 0) return;
@@ -251,89 +258,87 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
       </div>
 
       {showResults && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
           <div className="absolute inset-0 bg-overlay backdrop-blur-sm" />
-          <div className="relative w-full max-w-[min(700px,95vw)] rounded-4xl border border-surface-strong bg-surface-strong p-6 shadow-2xl shadow-slate-950/30 exam-summary-modal">
-            <div className="sticky top-0 z-10 border-b border-surface-strong/70 bg-surface-strong/95 pb-4 backdrop-blur-sm">
-              <div className="mb-4 text-center">
-                <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">{examName}</p>
-                <h2 className="mt-3 text-2xl font-semibold text-foreground">Exam Summary</h2>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  Review your final performance and share the result when ready.
-                </p>
+          <div className="relative w-full max-w-[min(1200px,calc(100vw-2rem))] rounded-4xl border border-surface-strong/80 bg-surface-strong/95 p-5 shadow-[0_30px_100px_-50px_rgba(0,0,0,0.85)] backdrop-blur-xl exam-summary-modal">
+            <div className="mb-4 border-b border-surface-strong/70 pb-4">
+              <div className="flex flex-col items-center justify-center gap-2 text-center sm:items-start sm:text-left">
+                <p className="text-[11px] uppercase tracking-[0.35em] text-sky-300/75">{examName}</p>
+                <h2 className="text-3xl font-semibold text-foreground">Exam Summary</h2>
               </div>
+              <p className="mt-2 text-sm leading-6 text-muted max-w-2xl mx-auto sm:mx-0">
+                Review your performance in a compact, modern exam result dialog.
+              </p>
             </div>
 
-            <div className="exam-summary-content space-y-4 pb-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Passage length required</p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">400 words</p>
+            <div className="exam-summary-content grid gap-4 sm:grid-cols-2">
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Passage length required</p>
+                <p className="mt-3 text-3xl font-semibold text-foreground">400</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Source words available</p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">{passageWordCount} words</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Source words available</p>
+                <p className="mt-3 text-3xl font-semibold text-foreground">{passageWordCount}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Words typed</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Words typed</p>
                 <p className="mt-3 text-3xl font-semibold text-warning">{wordsTyped}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Correct words</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Correct words</p>
                 <p className="mt-3 text-3xl font-semibold text-success">{correctWords}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Time taken</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Time taken</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{Math.floor(typingTime / 60)}:{String(typingTime % 60).padStart(2, "0")}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Total errors</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Total errors</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{totalErrors}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Misspelling</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Misspelling</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{misspelling}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Not attempted</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Not attempted</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{notAttempted}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Gross speed</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Gross speed</p>
                 <p className="mt-3 text-3xl font-semibold text-accent">{wpm} WPM</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Net speed</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Net speed</p>
                 <p className="mt-3 text-3xl font-semibold text-accent">{netSpeed} WPM</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Total keystrokes</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Total keystrokes</p>
                 <p className="mt-3 text-3xl font-semibold text-foreground">{totalKeystrokes}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Accuracy</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Accuracy</p>
                 <p className="mt-3 text-3xl font-semibold text-success">{accuracy}%</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Marks deducted</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Marks deducted</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">-{marksDeducted}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Final marks</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Final marks</p>
                 <p className="mt-3 text-3xl font-semibold text-foreground">{finalMarks}/20</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Qualifying marks</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Qualifying marks</p>
                 <p className="mt-3 text-3xl font-semibold text-foreground">{qualifyingMarks}</p>
               </div>
-              <div className="rounded-3xl bg-surface p-5 text-center border border-surface-strong">
-                <p className="text-sm uppercase tracking-[0.2em] text-muted">Final status</p>
+              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Final status</p>
                 <p className={`mt-3 text-3xl font-semibold ${finalStatus === "PASS" ? "text-emerald-400" : "text-rose-400"}`}>{finalStatus}</p>
               </div>
             </div>
-            </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
               <button
                 type="button"
                 onClick={resetTest}

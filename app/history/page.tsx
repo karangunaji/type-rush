@@ -6,8 +6,11 @@ import { createClient } from "@/utils/supabase/client";
 
 type ExamHistoryEntry = {
   id: string;
+  username?: string | null;
   exam_name: string;
+  difficulty: string;
   words_typed: number;
+  correct_words: number;
   accuracy: number;
   gross_speed: number;
   net_speed: number;
@@ -42,7 +45,8 @@ export default function HistoryPage() {
 
       const response = await supabase
         .from("exam_history")
-        .select("id, exam_name, words_typed, accuracy, gross_speed, net_speed, final_marks, status, created_at")
+        .select("id, username, exam_name, difficulty, words_typed, correct_words, accuracy, gross_speed, net_speed, final_marks, status, created_at")
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       const data = response.data as ExamHistoryEntry[] | null;
@@ -66,13 +70,14 @@ export default function HistoryPage() {
 
   const totals = useMemo(() => {
     if (!history || history.length === 0) {
-      return { count: 0, averageScore: 0, latest: null };
+      return { count: 0, averageAccuracy: 0, bestScore: 0, latest: null };
     }
 
     const count = history.length;
-    const averageScore = Math.round((history.reduce((sum, item) => sum + Number(item.final_marks), 0) / count) * 100) / 100;
+    const averageAccuracy = Math.round((history.reduce((sum, item) => sum + Number(item.accuracy), 0) / count) * 100) / 100;
+    const bestScore = Math.max(...history.map((item) => Number(item.final_marks)));
     const latest = history[0];
-    return { count, averageScore, latest };
+    return { count, averageAccuracy, bestScore, latest };
   }, [history]);
 
   if (loading) {
@@ -114,7 +119,7 @@ export default function HistoryPage() {
           {history.length === 0 ? (
             <div className="mt-10 rounded-4xl border border-dashed border-surface p-8 text-center">
               <p className="text-xl font-semibold text-foreground">No exam history found.</p>
-              <p className="mt-3 text-sm text-muted">Start your first typing exam to create history.</p>
+              <p className="mt-3 text-sm text-muted">Complete your first typing exam to create history.</p>
             </div>
           ) : (
             <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -123,18 +128,20 @@ export default function HistoryPage() {
                 <p className="mt-4 text-4xl font-semibold text-foreground">{totals.count}</p>
               </div>
               <div className="rounded-4xl bg-surface p-6 shadow-inner shadow-slate-950/10">
-                <p className="text-sm uppercase tracking-[0.28em] text-muted">Average score</p>
-                <p className="mt-4 text-4xl font-semibold text-foreground">{totals.averageScore}%</p>
+                <p className="text-sm uppercase tracking-[0.28em] text-muted">Average accuracy</p>
+                <p className="mt-4 text-4xl font-semibold text-foreground">{totals.averageAccuracy}%</p>
               </div>
               <div className="lg:col-span-2 rounded-4xl bg-surface p-6 shadow-inner shadow-slate-950/10">
-                <p className="text-sm uppercase tracking-[0.28em] text-muted">Latest exam result</p>
-                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm uppercase tracking-[0.28em] text-muted">Best score</p>
+                <p className="mt-4 text-4xl font-semibold text-foreground">{totals.bestScore}/20</p>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-base font-semibold text-foreground">{totals.latest?.exam_name}</p>
-                    <p className="mt-1 text-sm text-muted">{totals.latest?.created_at.slice(0, 16).replace("T", " ")}</p>
+                    <p className="text-sm uppercase tracking-[0.2em] text-muted">Latest exam</p>
+                    <p className="mt-2 text-base font-semibold text-foreground">{totals.latest?.exam_name}</p>
                   </div>
-                  <div className="rounded-3xl bg-surface-alt px-4 py-3 text-sm font-semibold text-foreground">
-                    {totals.latest?.status}
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.2em] text-muted">Latest result</p>
+                    <p className="mt-2 rounded-3xl bg-surface-alt px-3 py-2 text-sm font-semibold text-foreground">{totals.latest?.status}</p>
                   </div>
                 </div>
               </div>
