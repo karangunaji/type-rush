@@ -146,3 +146,16 @@ input {
 .bg-overlay {
   background: rgba(0, 0, 0, 0.55);
 }
+
+.exam-summary-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.exam-summary-content {
+  min-height: 1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: normal;
+}

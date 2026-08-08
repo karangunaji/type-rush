@@ -26,7 +26,12 @@ export default function BhcClerkPracticeTestPage() {
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl">
         {practiceSettings ? (
-          <TypingTest level="bhc" wordCount={400} durationMinutes={practiceSettings.duration} />
+          <TypingTest
+            level="bhc"
+            wordCount={400}
+            durationMinutes={practiceSettings.duration}
+            passage={practiceSettings.passage}
+          />
         ) : (
           <PracticeTest onBeginPractice={handleBeginPractice} onBack={handleBack} defaultExam="clerk" />
         )}

@@ -1,14 +1,41 @@
 import React, { useState } from "react";
 
-type PassageOption = string;
+type PassageOption =
+  | "Clerk Passage 1 - Legal Administration"
+  | "Clerk Passage 2 - Public Service"
+  | "PA Passage 1 - English Practice"
+  | "PA Passage 2 - Public Service"
+  | "AHC RO/ARO Passage 1 - English Practice"
+  | "AHC RO/ARO Passage 2 - Public Service"
+  | "AHC English Passage 1 - English Practice"
+  | "AHC English Passage 2 - Public Service";
 type DurationOption = 10 | 15;
 type ExamType = "clerk" | "pa" | "ahcRoAro" | "ahcEnglish";
 
-const examPassageOptions: Record<ExamType, string[]> = {
+const examPassageOptions: Record<ExamType, PassageOption[]> = {
   clerk: ["Clerk Passage 1 - Legal Administration", "Clerk Passage 2 - Public Service"],
   pa: ["PA Passage 1 - English Practice", "PA Passage 2 - Public Service"],
   ahcRoAro: ["AHC RO/ARO Passage 1 - English Practice", "AHC RO/ARO Passage 2 - Public Service"],
   ahcEnglish: ["AHC English Passage 1 - English Practice", "AHC English Passage 2 - Public Service"],
+};
+
+const passageTextMap: Record<PassageOption, string> = {
+  "Clerk Passage 1 - Legal Administration":
+    "The way we spend time beyond duty is deeply personal and should remain so. Leisure, when free from scrutiny, is not an innate right, but something hard-won, often claimed with resistance. The concept of women relaxing was alien to most of us growing up. Every time we turned around to catch a glimpse of our mothers and aunts, supposedly at their leisure hour, their hands were always busy making pickles, knitting, handpicking stones from grains, checking the children's scalp for lice, shelling peas, mending clothes primarily busy prepping for the next meal, the next season, the next reason and the next lesson. Every exploration to comprehend women's need for leisure unearths a layer determined by society. If it fits the definition, one has earned it. If it doesn't, it's considered a threat to social order. Historically, women have endured without really living and survived without thriving. Whether it was the lack of time or space or just consideration, our women ancestors were denied the privilege of privacy something our daughters now rightfully demand. I barely saw my mother and aunts slow down during their prime. Age slowed them down, not duties and responsibilities. The word 'boredom' was thrown around a lot during my adolescence. Oblivious to its procedures and practices, my mother naively asked what getting bored entailed. Cut to the 2000s. We insist our children get bored so they acquaint themselves with the spirit of slowness. Being materialistically strong doesn't prevent us from experiencing discontent in our regular lives, which gets consumed by roles set for us. Our feelings of inadequacy stem from inequitable physical and emotional labour. Access to leisure liberates us from the drudgeries of life. Religion as leisure is a huge escape since it has social sanction. Another was answering nature's call in rural India, which was reduced with the advent of toilets inside houses. Twice a day, women were allowed to step out in groups to congregate under the celestial bodies. An opportunity in the guise of attending to one's physiological needs was a luxury they were afforded by the community to connect with fellow sisters. Exhaustion, for both men and women, has always held different meanings. As has the idea of rest. The concept of switching off carries with its tremendous mental load for womenfolk. Leisure doesn't completely entail the 'radical act of doing nothing'. Even in leisure hour, a woman is invariably seen.",
+  "Clerk Passage 2 - Public Service":
+    "Public service asks for patience, perseverance and the ability to shape systems that work for people. Every community depends on a web of effort that rarely gets noticed, and a public servant often finds meaning in service rather than praise. This passage is a placeholder for the public service prompt.",
+  "PA Passage 1 - English Practice":
+    "PA practice passage one is focused on administrative language and precise expressions, helping candidates type with clarity and pace.",
+  "PA Passage 2 - Public Service":
+    "This passage supports practice for public service language, reinforcing speed and accuracy in a formal context.",
+  "AHC RO/ARO Passage 1 - English Practice":
+    "AHC RO/ARO passage one is designed to help ease candidates into the style of question paper language and court-related typing prompts.",
+  "AHC RO/ARO Passage 2 - Public Service":
+    "This AHC RO/ARO passage is a practice prompt aimed at improving flow and consistency for exam preparation.",
+  "AHC English Passage 1 - English Practice":
+    "AHC English passage one helps build simple English typing stamina with standard sentence structure and easy vocabulary.",
+  "AHC English Passage 2 - Public Service":
+    "This passage prepares candidates for general English typing practice in the context of public service and court administration.",
 };
 
 const examInfo: Record<ExamType, {
@@ -109,7 +136,7 @@ export default function PracticeTest({
   onBack,
   defaultExam = "clerk",
 }: {
-  onBeginPractice: (passage: PassageOption, duration: DurationOption) => void;
+  onBeginPractice: (passage: string, duration: DurationOption) => void;
   onBack: () => void;
   defaultExam?: ExamType;
 }) {
@@ -118,6 +145,8 @@ export default function PracticeTest({
   const [duration, setDuration] = useState<DurationOption>(10);
   const [showMore, setShowMore] = useState(false);
   const selectedInfo = examInfo[defaultExam];
+
+  const selectedPassageText = passageTextMap[passage] ?? passage;
 
   return (
     <section className="rounded-4xl border border-surface-strong bg-surface-strong p-8 shadow-2xl shadow-slate-950/30">
@@ -234,7 +263,7 @@ export default function PracticeTest({
 
           <button
             type="button"
-            onClick={() => onBeginPractice(passage, duration)}
+            onClick={() => onBeginPractice(selectedPassageText, duration)}
             className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-accent px-6 py-3 text-sm font-semibold text-foreground transition hover:brightness-110 cursor-pointer"
           >
             Start practice now
