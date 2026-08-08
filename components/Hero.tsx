@@ -1,14 +1,20 @@
 import React from "react";
 
-type Level = "low" | "medium" | "hard" | "bhc";
+type Level = "low" | "medium" | "hard" | "bhc" | "bhcPa" | "ahcRoAro" | "ahcEnglish";
 
-export default function Hero({ onStart }: { onStart: (level: Level) => void }) {
-  const levels: { key: Level; title: string; desc: string }[] = [
+export default function Hero({ onStart, activeTab, setActiveTab }: { onStart: (level: Level) => void; activeTab: "exams" | "demo"; setActiveTab: React.Dispatch<React.SetStateAction<"exams" | "demo">>; }) {
+  const allLevels: { key: Level; title: string; desc: string }[] = [
     { key: "low", title: "Low", desc: "Shorter prompts, easier pace." },
     { key: "medium", title: "Medium", desc: "Balanced challenge for practice." },
     { key: "hard", title: "Hard", desc: "Longer prompts, faster pace." },
-    { key: "bhc", title: "BHC-Clerk Typing Test", desc: "Practice or custom challenge for the full BHC flow." },
+    { key: "bhc", title: "BHC Clerk Typing Test", desc: "Practice the full BHC Clerk typing flow." },
+    { key: "bhcPa", title: "BHC PA English Typing", desc: "Practice the Bombay High Court PA typing exam." },
+    { key: "ahcRoAro", title: "Allahabad High Court RO/ARO English Typing", desc: "Practice the AHC RO/ARO English typing exam." },
+    { key: "ahcEnglish", title: "Allahabad High Court English Typing", desc: "Practice the AHC English typing exam." },
   ];
+  const levels = activeTab === "exams"
+    ? allLevels.filter((lvl) => ["bhc", "bhcPa", "ahcRoAro", "ahcEnglish"].includes(lvl.key))
+    : allLevels.filter((lvl) => !["bhc", "bhcPa", "ahcRoAro", "ahcEnglish"].includes(lvl.key));
 
   return (
     <section>
@@ -23,6 +29,23 @@ export default function Hero({ onStart }: { onStart: (level: Level) => void }) {
           </div>
         </div>
       </header>
+
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab("exams")}
+          className={`rounded-3xl px-4 py-2 text-sm font-semibold transition ${activeTab === "exams" ? "bg-accent text-foreground" : "bg-surface-alt text-foreground hover:bg-surface cursor-pointer"}`}
+        >
+          Exams
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("demo")}
+          className={`rounded-3xl px-4 py-2 text-sm font-semibold transition ${activeTab === "demo" ? "bg-accent text-foreground" : "bg-surface-alt text-foreground hover:bg-surface cursor-pointer"}`}
+        >
+          Demo Typing
+        </button>
+      </div>
 
       <div className="mt-6 grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {levels.map((lvl) => (

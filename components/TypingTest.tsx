@@ -8,7 +8,17 @@ import Stats from "./Stats";
 const TEST_DURATION = 60;
 const VISIBLE_WORD_COUNT = 60;
 
-const wordCountMap: Record<Level, number> = { low: 20, medium: 40, hard: 60, bhc: 80 };
+type Level = "low" | "medium" | "hard" | "bhc" | "bhcPa" | "ahcRoAro" | "ahcEnglish";
+
+const wordCountMap: Record<Level, number> = {
+  low: 20,
+  medium: 40,
+  hard: 60,
+  bhc: 80,
+  bhcPa: 510,
+  ahcRoAro: 500,
+  ahcEnglish: 300,
+};
 
 function countMistakes(original: string, typed: string) {
   let mistakes = 0;
@@ -17,8 +27,6 @@ function countMistakes(original: string, typed: string) {
   }
   return mistakes;
 }
-
-type Level = "low" | "medium" | "hard" | "bhc";
 
 export default function TypingTest({ level = "medium", wordCount, durationMinutes }: { level?: Level; wordCount?: number; durationMinutes?: number }) {
   const count = wordCount ?? wordCountMap[level];
@@ -51,28 +59,24 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
     setInput("");
   };
 
+  const isTestComplete = timeLeft <= 0 || input.length >= text.length;
+
   useEffect(() => {
     if (!started || timeLeft <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        const next = prev - 1;
-        if (next <= 0) {
-          setShowResults(true);
-        }
-        return next;
-      });
+      setTimeLeft((prev) => Math.max(prev - 1, 0));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [started, timeLeft]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      const timeout = window.setTimeout(() => setShowResults(true), 0);
-      return () => window.clearTimeout(timeout);
-    }
-  }, [timeLeft]);
+    if (!isTestComplete) return;
+
+    const timeout = window.setTimeout(() => setShowResults(true), 0);
+    return () => window.clearTimeout(timeout);
+  }, [isTestComplete]);
 
   const handleChange = (value: string) => {
     if (timeLeft <= 0) return;
