@@ -4,8 +4,11 @@
 create table if not exists public.exam_history (
   id uuid default gen_random_uuid() primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
+  username text not null,
+  difficulty text not null,
   exam_name text not null,
   words_typed int not null,
+  correct_words int not null,
   accuracy int not null,
   gross_speed int not null,
   net_speed int not null,

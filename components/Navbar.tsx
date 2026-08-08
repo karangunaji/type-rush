@@ -27,6 +27,22 @@ export default function Navbar() {
 
   const [username, setUsername] = useState<string | null>(null);
 
+  async function resolveUsername(user: Session | null) {
+    if (!user?.user) return null;
+    const meta = user.user.user_metadata as Record<string, unknown> | undefined;
+    if (meta?.username && typeof meta.username === "string") return meta.username;
+
+    try {
+      const supabase = createClient();
+      const profile = await supabase.from("profiles").select("username").eq("id", user.user.id).single();
+      if (profile.data?.username && typeof profile.data.username === "string") return profile.data.username;
+    } catch {
+      // ignore database lookup failures and fallback to generic label.
+    }
+
+    return null;
+  }
+
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -34,11 +50,9 @@ export default function Navbar() {
         const supabase = createClient();
         const { data } = await supabase.auth.getUser();
         if (!mounted) return;
-        if (data?.user) {
-          const meta = data.user.user_metadata as Record<string, unknown> | undefined;
-          const name = meta && typeof meta.username === "string" ? (meta.username as string) : data.user.email ?? null;
-          setUsername(name);
-        }
+
+        const name = await resolveUsername(data as Session | null);
+        setUsername(name ?? "User");
       } catch {
         return;
       }
@@ -50,9 +64,9 @@ export default function Navbar() {
       const supabase = createClient();
       const res = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
         if (session?.user) {
-          const meta = session.user.user_metadata as Record<string, unknown> | undefined;
-          const name = meta && typeof meta.username === "string" ? (meta.username as string) : session.user.email ?? null;
-          setUsername(name);
+          resolveUsername(session).then((name) => {
+            if (mounted) setUsername(name ?? "User");
+          });
         } else {
           setUsername(null);
         }
