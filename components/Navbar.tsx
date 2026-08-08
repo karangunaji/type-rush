@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import type { Session } from "@supabase/supabase-js";
-import AuthModal from "@/components/AuthModal";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -14,6 +14,7 @@ export default function Navbar() {
     const prefersLight = typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches;
     return prefersLight ? "light" : "dark";
   });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -24,15 +25,13 @@ export default function Navbar() {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
-  // Auth state
-  const [authOpen, setAuthOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
-        const supabase = getSupabaseClient();
+        const supabase = createClient();
         const { data } = await supabase.auth.getUser();
         if (!mounted) return;
         if (data?.user) {
@@ -41,7 +40,6 @@ export default function Navbar() {
           setUsername(name);
         }
       } catch {
-        // supabase not configured during prerender/build — ignore here
         return;
       }
     }
@@ -49,7 +47,7 @@ export default function Navbar() {
 
     let subscription: { unsubscribe: () => void } | null = null;
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       const res = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
         if (session?.user) {
           const meta = session.user.user_metadata as Record<string, unknown> | undefined;
@@ -63,7 +61,6 @@ export default function Navbar() {
         subscription = (res.data as { subscription: { unsubscribe: () => void } }).subscription;
       }
     } catch {
-      // ignore if supabase not configured at build/prerender
       subscription = null;
     }
 
@@ -75,12 +72,13 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const supabase = getSupabaseClient();
+      const supabase = createClient();
       await supabase.auth.signOut();
     } catch {
       // ignore if supabase not configured
     }
     setUsername(null);
+    setDropdownOpen(false);
   };
 
   return (
@@ -104,16 +102,51 @@ export default function Navbar() {
           </a>
 
           {username ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-foreground">{username}</span>
-              <button onClick={handleLogout} className="rounded-3xl border border-surface-strong bg-surface-alt px-3 py-2 text-sm text-foreground hover:bg-surface cursor-pointer">Logout</button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((current) => !current)}
+                className="inline-flex items-center gap-2 rounded-3xl border border-surface-strong bg-surface-alt px-3 py-2 text-sm text-foreground hover:bg-surface cursor-pointer"
+              >
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5">
+                    <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
+                  </svg>
+                </span>
+                <span className="text-sm text-foreground">{username}</span>
+                <span aria-hidden="true">▾</span>
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 z-20 mt-2 w-44 rounded-3xl border border-surface-strong bg-surface-strong shadow-xl">
+                  <Link href="/history" className="block rounded-3xl px-4 py-3 text-sm text-foreground hover:bg-surface cursor-pointer">
+                    History
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full rounded-b-3xl px-4 py-3 text-left text-sm text-foreground hover:bg-surface cursor-pointer"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <>
-              <button onClick={() => setAuthOpen(true)} className="rounded-3xl border border-surface-strong bg-surface-alt px-3 py-2 text-sm text-foreground hover:bg-surface cursor-pointer" type="button">
-                Login / Sign up
-              </button>
-            </>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="rounded-3xl border border-surface-strong bg-surface-alt px-3 py-2 text-sm text-foreground hover:bg-surface cursor-pointer"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-3xl bg-accent px-3 py-2 text-sm font-semibold text-foreground hover:brightness-110"
+              >
+                Sign up
+              </Link>
+            </div>
           )}
 
           <button
@@ -160,12 +193,29 @@ export default function Navbar() {
 
             {username ? (
               <div className="space-y-2">
-                <div className="px-2 text-sm text-foreground">{username}</div>
-                <button onClick={handleLogout} className="w-full rounded-lg border border-surface-strong bg-surface-alt px-3 py-2 text-left text-sm text-foreground hover:bg-surface cursor-pointer" type="button">Logout</button>
+                <div className="flex items-center gap-2 rounded-3xl border border-surface-strong bg-surface-alt px-3 py-2 text-sm text-foreground">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4">
+                      <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
+                    </svg>
+                  </span>
+                  <span>{username}</span>
+                </div>
+                <Link href="/history" className="block rounded-lg border border-surface-strong bg-surface-alt px-3 py-2 text-left text-sm text-foreground hover:bg-surface cursor-pointer">
+                  History
+                </Link>
+                <button onClick={handleLogout} className="w-full rounded-lg border border-surface-strong bg-surface-alt px-3 py-2 text-left text-sm text-foreground hover:bg-surface cursor-pointer" type="button">
+                  Logout
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <button onClick={() => setAuthOpen(true)} className="w-full rounded-lg border border-surface-strong bg-surface-alt px-3 py-2 text-left text-sm text-foreground hover:bg-surface cursor-pointer" type="button">Login / Sign up</button>
+                <Link href="/login" className="block rounded-lg border border-surface-strong bg-surface-alt px-3 py-2 text-left text-sm text-foreground hover:bg-surface cursor-pointer">
+                  Login
+                </Link>
+                <Link href="/signup" className="block rounded-lg bg-accent px-3 py-2 text-left text-sm font-semibold text-foreground hover:brightness-110">
+                  Sign up
+                </Link>
               </div>
             )}
 
@@ -180,7 +230,6 @@ export default function Navbar() {
         </div>
       )}
       </nav>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );
 }
