@@ -34,13 +34,13 @@ export default function Navbar() {
       try {
         const supabase = getSupabaseClient();
         const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      if (data?.user) {
-        const meta = data.user.user_metadata as Record<string, unknown> | undefined;
-        const name = meta && typeof meta.username === "string" ? (meta.username as string) : data.user.email ?? null;
-        setUsername(name);
-      }
-      } catch (err) {
+        if (!mounted) return;
+        if (data?.user) {
+          const meta = data.user.user_metadata as Record<string, unknown> | undefined;
+          const name = meta && typeof meta.username === "string" ? (meta.username as string) : data.user.email ?? null;
+          setUsername(name);
+        }
+      } catch {
         // supabase not configured during prerender/build — ignore here
         return;
       }
@@ -59,10 +59,10 @@ export default function Navbar() {
           setUsername(null);
         }
       });
-      if (res && res.data && (res.data as any).subscription) {
-        subscription = (res.data as any).subscription;
+      if (res && res.data && typeof (res.data as { subscription?: unknown }).subscription === "object") {
+        subscription = (res.data as { subscription: { unsubscribe: () => void } }).subscription;
       }
-    } catch (err) {
+    } catch {
       // ignore if supabase not configured at build/prerender
       subscription = null;
     }
@@ -77,7 +77,7 @@ export default function Navbar() {
     try {
       const supabase = getSupabaseClient();
       await supabase.auth.signOut();
-    } catch (err) {
+    } catch {
       // ignore if supabase not configured
     }
     setUsername(null);
