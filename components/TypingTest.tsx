@@ -28,6 +28,14 @@ function countMistakes(original: string, typed: string) {
   return mistakes;
 }
 
+function calculateBhcMarks(mistakes: number) {
+  const deducted = Number((mistakes * 0.25).toFixed(2));
+  return {
+    marksDeducted: Math.min(20, deducted),
+    finalMarks: Math.max(0, Number((20 - deducted).toFixed(2))),
+  };
+}
+
 export default function TypingTest({ level = "medium", wordCount, durationMinutes, passage }: { level?: Level; wordCount?: number; durationMinutes?: number; passage?: string }) {
   const count = wordCount ?? wordCountMap[level];
   const durationSeconds = durationMinutes ? durationMinutes * 60 : TEST_DURATION;
@@ -49,8 +57,10 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   const totalCharsTyped = completedChars + input.length;
   const progress = Math.min(100, Math.max(0, Math.floor((totalCharsTyped / text.length) * 100)));
   const fullTypedText = `${completedText}${input}`;
-  const requiredWords = count;
-  const originalWords = text.split(/\s+/).filter(Boolean).slice(0, requiredWords);
+  const passageWords = text.trim().split(/\s+/).filter(Boolean);
+  const totalPassageWords = passageWords.length;
+  const requiredWords = totalPassageWords;
+  const originalWords = passageWords.slice(0, requiredWords);
   const typedWords = fullTypedText.trim().split(/\s+/).filter(Boolean);
   const wordsTyped = typedWords.length;
   const attemptedWords = Math.min(wordsTyped, requiredWords);
@@ -60,7 +70,7 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   const misspelling = Math.max(0, attemptedWords - correctWords);
   const notAttempted = Math.max(0, requiredWords - wordsTyped);
   const wrongWords = Math.max(0, wordsTyped - correctWords);
-  const totalErrors = misspelling + notAttempted;
+  const mistakes = countMistakes(text, fullTypedText);
   const totalKeystrokes = fullTypedText.length;
   const secondsElapsed = durationSeconds - timeLeft;
   const timeInMinutes = Math.max(1 / 60, secondsElapsed / 60);
@@ -68,20 +78,16 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   const wpm = grossSpeed;
   const netSpeed = Math.max(0, Math.round((grossSpeed - wrongWords / timeInMinutes) * 100) / 100);
   const accuracy = wordsTyped > 0 ? Math.round((correctWords / wordsTyped) * 100) : 0;
-  const completion = requiredWords > 0 ? Math.min(1, wordsTyped / requiredWords) : 0;
-  const accuracyScore = Math.round((correctWords / requiredWords) * 20 * 100) / 100;
-  const penalty = Math.round(wrongWords * 0.1 * 100) / 100;
-  const marksDeducted = penalty;
-  const finalMarks = Math.max(0, Math.min(20, Math.round((accuracyScore - penalty) * 100) / 100));
+  const { marksDeducted, finalMarks } = calculateBhcMarks(mistakes);
   const qualifyingMarks = 10;
   const finalStatus = finalMarks >= qualifyingMarks ? "PASS" : "FAIL";
   const typingTime = secondsElapsed;
-  const passageWordCount = requiredWords;
+  const passageWordCount = totalPassageWords;
   const difficulty = level;
   const examName = level === "bhc" ? "BHC Clerk Typing Exam" : level === "bhcPa" ? "BHC PA Typing Exam" : level === "ahcRoAro" ? "AHC RO/ARO English Typing Exam" : level === "ahcEnglish" ? "AHC English Typing Exam" : "Typing Exam";
 
   const handleShare = async () => {
-    const shareText = `Exam: ${examName}\nWords Typed: ${wordsTyped}\nCorrect Words: ${correctWords}\nGross Speed: ${wpm} WPM\nNet Speed: ${netSpeed} WPM\nAccuracy: ${accuracy}%\nFinal Marks: ${finalMarks}/20\nStatus: ${finalStatus}`;
+    const shareText = `Exam: ${examName}\nWords Typed: ${wordsTyped}\nCorrect Words: ${correctWords}\nGross Speed: ${wpm} WPM\nNet Speed: ${netSpeed} WPM\nAccuracy: ${accuracy}%\nMarks Deducted: ${marksDeducted.toFixed(2)}\nFinal Marks: ${finalMarks.toFixed(2)}/20\nStatus: ${finalStatus}`;
 
     if (navigator.share) {
       await navigator.share({ title: "Typing Exam Results", text: shareText });
@@ -197,7 +203,6 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   };
 
   const typedWordCount = typedWords.length;
-  const mistakes = countMistakes(text, fullTypedText);
 
   return (
     <section className="rounded-4xl border border-surface-strong bg-surface-strong p-6 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.8)] sm:p-8">
@@ -205,7 +210,7 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
         wpm={wpm}
         accuracy={accuracy}
         timeLeft={timeLeft}
-        words={typedWordCount}
+        words={passageWordCount}
         mistakes={mistakes}
       />
 
@@ -223,8 +228,8 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
             </div>
           </div>
 
-          <div className="min-h-45 overflow-hidden rounded-3xl border border-surface bg-surface-alt p-5 text-left text-lg leading-8 text-foreground shadow-inner shadow-slate-950/30 sm:min-h-55">
-            <p className="whitespace-pre-wrap wrap-break-word text-foreground">{segmentText}</p>
+          <div className="h-90 max-h-90 min-h-80 overflow-y-auto rounded-3xl border border-surface bg-surface-alt p-5 text-left text-lg leading-8 text-foreground shadow-inner shadow-slate-950/30 scrollbar-custom sm:h-95">
+            <p className="whitespace-pre-wrap wrap-break-word text-foreground">{text}</p>
           </div>
         </div>
 
@@ -293,16 +298,8 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
                 <p className="mt-3 text-3xl font-semibold text-danger">{Math.floor(typingTime / 60)}:{String(typingTime % 60).padStart(2, "0")}</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">Total errors</p>
-                <p className="mt-3 text-3xl font-semibold text-danger">{totalErrors}</p>
-              </div>
-              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">Misspelling</p>
-                <p className="mt-3 text-3xl font-semibold text-danger">{misspelling}</p>
-              </div>
-              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">Not attempted</p>
-                <p className="mt-3 text-3xl font-semibold text-danger">{notAttempted}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Total mistakes</p>
+                <p className="mt-3 text-3xl font-semibold text-danger">{mistakes}</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Gross speed</p>
@@ -322,11 +319,11 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Marks deducted</p>
-                <p className="mt-3 text-3xl font-semibold text-danger">-{marksDeducted}</p>
+                <p className="mt-3 text-3xl font-semibold text-danger">-{marksDeducted.toFixed(2)}</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Final marks</p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">{finalMarks}/20</p>
+                <p className="mt-3 text-3xl font-semibold text-foreground">{finalMarks.toFixed(2)}/20</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Qualifying marks</p>
