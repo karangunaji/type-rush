@@ -41,26 +41,21 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
   const durationSeconds = durationMinutes ? durationMinutes * 60 : TEST_DURATION;
   const text = useMemo(() => (passage?.trim() ? passage : generateText(count)), [passage, count]);
   const [input, setInput] = useState("");
-  const [completedText, setCompletedText] = useState("");
-  const [segmentStartWord, setSegmentStartWord] = useState(0);
+  // Use a single input buffer for editor-like behavior
   const [timeLeft, setTimeLeft] = useState(durationSeconds);
   const [started, setStarted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [historySaved, setHistorySaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const words = text.split(" ");
-  const segmentWords = words.slice(segmentStartWord, segmentStartWord + VISIBLE_WORD_COUNT);
-  const segmentText = segmentWords.join(" ");
-  const segmentLength = segmentText.length;
-  const completedChars = words.slice(0, segmentStartWord).join(" ").length;
-  const totalCharsTyped = completedChars + input.length;
-  const progress = Math.min(100, Math.max(0, Math.floor((totalCharsTyped / text.length) * 100)));
-  const fullTypedText = `${completedText}${input}`;
   const passageWords = text.trim().split(/\s+/).filter(Boolean);
   const totalPassageWords = passageWords.length;
   const requiredWords = totalPassageWords;
   const originalWords = passageWords.slice(0, requiredWords);
+  // Use the full textarea input as the typed text (editor-like)
+  const fullTypedText = input;
+  const totalCharsTyped = fullTypedText.length;
+  const progress = Math.min(100, Math.max(0, Math.floor((totalCharsTyped / text.length) * 100)));
   const typedWords = fullTypedText.trim().split(/\s+/).filter(Boolean);
   const wordsTyped = typedWords.length;
   const attemptedWords = Math.min(wordsTyped, requiredWords);
@@ -98,19 +93,7 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
     window.open(`https://wa.me/?text=${encoded}`, "_blank");
   };
 
-  const advanceSegment = () => {
-    const nextStart = segmentStartWord + VISIBLE_WORD_COUNT;
-    if (nextStart >= words.length) {
-      setCompletedText((prev) => `${prev}${input}`);
-      setStarted(false);
-      setShowResults(true);
-      return;
-    }
-
-    setCompletedText((prev) => `${prev}${input} `);
-    setSegmentStartWord(nextStart);
-    setInput("");
-  };
+  // No segmentation: editor holds entire typed content in `input`.
 
   const isTestComplete = timeLeft <= 0 || input.length >= text.length;
 
@@ -178,23 +161,14 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
 
   const handleChange = (value: string) => {
     if (timeLeft <= 0) return;
-    if (value.length < input.length) return;
-
-    const nextValue = value.slice(0, segmentLength);
     if (!started) setStarted(true);
-    if (nextValue.length >= segmentLength) {
-      setInput(nextValue);
-      advanceSegment();
-      return;
-    }
-
-    setInput(nextValue);
+    // allow normal editing, but limit input to source length
+    setInput(value.slice(0, text.length));
   };
 
   const resetTest = () => {
     setInput("");
-    setCompletedText("");
-    setSegmentStartWord(0);
+    // segmentation removed; simply clear input
     setTimeLeft(durationSeconds);
     setStarted(false);
     setShowResults(false);
@@ -237,14 +211,23 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
           <textarea
             value={input}
             onChange={(e) => handleChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" || e.key === "Enter") {
+            // Allow normal editing behaviour: cursor movement, selection, backspace/delete, clipboard
+            disabled={timeLeft <= 0}
+            placeholder="Start typing here..."
+            autoFocus
+            onFocus={(e) => e.currentTarget.focus()}
+            onWheel={(e) => {
+              // prevent page scroll when scrolling inside the textarea
+              const el = e.currentTarget;
+              const atTop = el.scrollTop === 0;
+              const atBottom = el.scrollHeight - el.clientHeight === el.scrollTop;
+              if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
                 e.preventDefault();
+                e.stopPropagation();
               }
             }}
-            disabled={timeLeft <= 0 || input.length >= text.length}
-            placeholder="Start typing here..."
-            className="h-44 w-full resize-none rounded-3xl border border-surface-strong bg-surface p-5 text-lg text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-[rgba(56,189,248,0.2)] sm:h-64"
+            className="h-60 w-full overflow-y-auto rounded-3xl border border-surface-strong bg-surface p-5 text-lg text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-[rgba(56,189,248,0.2)] scrollbar-custom"
+            spellCheck={false}
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
