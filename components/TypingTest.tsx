@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { generateText } from "@/data/words";
 import { createClient } from "@/utils/supabase/client";
 import Stats from "./Stats";
@@ -36,7 +37,8 @@ function calculateBhcMarks(mistakes: number) {
   };
 }
 
-export default function TypingTest({ level = "medium", wordCount, durationMinutes, passage }: { level?: Level; wordCount?: number; durationMinutes?: number; passage?: string }) {
+export default function TypingTest({ level = "medium", wordCount, durationMinutes, passage, allowBackspace = false, onBack, }: { level?: Level; wordCount?: number; durationMinutes?: number; passage?: string; allowBackspace?: boolean; onBack?: () => void; }) {
+  const router = useRouter();
   const count = wordCount ?? wordCountMap[level];
   const durationSeconds = durationMinutes ? durationMinutes * 60 : TEST_DURATION;
   const text = useMemo(() => (passage?.trim() ? passage : generateText(count)), [passage, count]);
@@ -180,6 +182,24 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
 
   return (
     <section className="rounded-4xl border border-surface-strong bg-surface-strong p-6 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.8)] sm:p-8">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (onBack) {
+              onBack();
+              return;
+            }
+            router.back();
+          }}
+          className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-surface-alt text-sm font-medium text-foreground ring-1 ring-surface-strong hover:brightness-105 cursor-pointer"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back to Test Details
+        </button>
+      </div>
       <Stats
         wpm={wpm}
         accuracy={accuracy}
@@ -213,9 +233,9 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
             onChange={(e) => handleChange(e.target.value)}
             // Allow normal editing behaviour: cursor movement, selection, clipboard, but disable Backspace during active exam
             onKeyDown={(e) => {
-              // Disable Backspace while the exam is active and the textarea is focused.
-              // This prevents deleting characters (including when text is selected) but preserves cursor movement and selection.
-              if (e.key === "Backspace" && timeLeft > 0) {
+              // Disable Backspace while the exam is active and the textarea is focused,
+              // unless `allowBackspace` is true. Preserve cursor movement and selection for other keys.
+              if (e.key === "Backspace" && timeLeft > 0 && !allowBackspace) {
                 e.preventDefault();
                 e.stopPropagation();
                 return;

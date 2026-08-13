@@ -142,6 +142,7 @@ export default function Home() {
                 level={level}
                 wordCount={practiceSettings ? 400 : undefined}
                 durationMinutes={practiceSettings?.duration}
+                onBack={handleBackToSelect}
               />
             )}
           </div>
