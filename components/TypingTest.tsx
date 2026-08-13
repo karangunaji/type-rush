@@ -211,7 +211,16 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
           <textarea
             value={input}
             onChange={(e) => handleChange(e.target.value)}
-            // Allow normal editing behaviour: cursor movement, selection, backspace/delete, clipboard
+            // Allow normal editing behaviour: cursor movement, selection, clipboard, but disable Backspace during active exam
+            onKeyDown={(e) => {
+              // Disable Backspace while the exam is active and the textarea is focused.
+              // This prevents deleting characters (including when text is selected) but preserves cursor movement and selection.
+              if (e.key === "Backspace" && timeLeft > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+            }}
             disabled={timeLeft <= 0}
             placeholder="Start typing here..."
             autoFocus
