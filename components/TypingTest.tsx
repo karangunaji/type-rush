@@ -184,8 +184,8 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
         wpm={wpm}
         accuracy={accuracy}
         timeLeft={timeLeft}
-        words={passageWordCount}
-        mistakes={mistakes}
+        typedWords={wordsTyped}
+        totalWords={passageWordCount}
       />
 
       <div className="grid gap-6">
@@ -270,8 +270,8 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
 
             <div className="exam-summary-content grid gap-4 sm:grid-cols-2">
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">Passage length required</p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">400</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">WORDS</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">{wordsTyped} / {passageWordCount}</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Source words available</p>
@@ -289,10 +289,10 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Time taken</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{Math.floor(typingTime / 60)}:{String(typingTime % 60).padStart(2, "0")}</p>
               </div>
-              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+              {/* <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Total mistakes</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{mistakes}</p>
-              </div>
+              </div> */}
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Gross speed</p>
                 <p className="mt-3 text-3xl font-semibold text-accent">{wpm} WPM</p>
