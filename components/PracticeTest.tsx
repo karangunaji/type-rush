@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type PassageOption =
   | "Clerk Passage 1 - Legal Administration"
@@ -148,9 +149,28 @@ export default function PracticeTest({
   const selectedInfo = examInfo[defaultExam];
 
   const selectedPassageText = passageTextMap[passage] ?? passage;
+  const router = useRouter();
 
   return (
     <section className="rounded-4xl border border-surface-strong bg-surface-strong p-8 shadow-2xl shadow-slate-950/30">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (onBack) {
+              onBack();
+              return;
+            }
+            router.push("/");
+          }}
+          className="inline-flex items-center gap-2 rounded-3xl border border-surface bg-surface-alt px-3 py-2 text-sm text-foreground hover:brightness-105 cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+            <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H16a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Back to Home
+        </button>
+      </div>
       <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <div>
           <p className="text-sm uppercase tracking-[0.28em] text-sky-300/80">Test Details</p>
