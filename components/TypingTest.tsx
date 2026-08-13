@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { generateText } from "@/data/words";
 import { createClient } from "@/utils/supabase/client";
 import Stats from "./Stats";
@@ -36,7 +37,8 @@ function calculateBhcMarks(mistakes: number) {
   };
 }
 
-export default function TypingTest({ level = "medium", wordCount, durationMinutes, passage }: { level?: Level; wordCount?: number; durationMinutes?: number; passage?: string }) {
+export default function TypingTest({ level = "medium", wordCount, durationMinutes, passage, allowBackspace = false, onBack, }: { level?: Level; wordCount?: number; durationMinutes?: number; passage?: string; allowBackspace?: boolean; onBack?: () => void; }) {
+  const router = useRouter();
   const count = wordCount ?? wordCountMap[level];
   const durationSeconds = durationMinutes ? durationMinutes * 60 : TEST_DURATION;
   const text = useMemo(() => (passage?.trim() ? passage : generateText(count)), [passage, count]);
@@ -180,12 +182,30 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
 
   return (
     <section className="rounded-4xl border border-surface-strong bg-surface-strong p-6 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.8)] sm:p-8">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (onBack) {
+              onBack();
+              return;
+            }
+            router.back();
+          }}
+          className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-surface-alt text-sm font-medium text-foreground ring-1 ring-surface-strong hover:brightness-105 cursor-pointer"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back to Test Details
+        </button>
+      </div>
       <Stats
         wpm={wpm}
         accuracy={accuracy}
         timeLeft={timeLeft}
-        words={passageWordCount}
-        mistakes={mistakes}
+        typedWords={wordsTyped}
+        totalWords={passageWordCount}
       />
 
       <div className="grid gap-6">
@@ -213,9 +233,9 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
             onChange={(e) => handleChange(e.target.value)}
             // Allow normal editing behaviour: cursor movement, selection, clipboard, but disable Backspace during active exam
             onKeyDown={(e) => {
-              // Disable Backspace while the exam is active and the textarea is focused.
-              // This prevents deleting characters (including when text is selected) but preserves cursor movement and selection.
-              if (e.key === "Backspace" && timeLeft > 0) {
+              // Disable Backspace while the exam is active and the textarea is focused,
+              // unless `allowBackspace` is true. Preserve cursor movement and selection for other keys.
+              if (e.key === "Backspace" && timeLeft > 0 && !allowBackspace) {
                 e.preventDefault();
                 e.stopPropagation();
                 return;
@@ -270,8 +290,8 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
 
             <div className="exam-summary-content grid gap-4 sm:grid-cols-2">
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">Passage length required</p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">400</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">WORDS</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">{wordsTyped} / {passageWordCount}</p>
               </div>
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Source words available</p>
@@ -289,10 +309,10 @@ export default function TypingTest({ level = "medium", wordCount, durationMinute
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Time taken</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{Math.floor(typingTime / 60)}:{String(typingTime % 60).padStart(2, "0")}</p>
               </div>
-              <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
+              {/* <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Total mistakes</p>
                 <p className="mt-3 text-3xl font-semibold text-danger">{mistakes}</p>
-              </div>
+              </div> */}
               <div className="flex min-h-30 flex-col justify-between rounded-3xl border border-surface-strong/70 bg-surface p-4 text-center shadow-sm shadow-slate-950/10">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">Gross speed</p>
                 <p className="mt-3 text-3xl font-semibold text-accent">{wpm} WPM</p>

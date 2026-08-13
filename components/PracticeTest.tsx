@@ -136,13 +136,14 @@ export default function PracticeTest({
   onBack,
   defaultExam = "clerk",
 }: {
-  onBeginPractice: (passage: string, duration: DurationOption) => void;
+  onBeginPractice: (passage: string, duration: DurationOption, allowBackspace: boolean) => void;
   onBack: () => void;
   defaultExam?: ExamType;
 }) {
   const passageOptions = examPassageOptions[defaultExam] ?? examPassageOptions.clerk;
   const [passage, setPassage] = useState<PassageOption>(passageOptions[0]);
   const [duration, setDuration] = useState<DurationOption>(10);
+  const [allowBackspace, setAllowBackspace] = useState<boolean>(false);
   const [showMore, setShowMore] = useState(false);
   const selectedInfo = examInfo[defaultExam];
 
@@ -253,17 +254,30 @@ export default function PracticeTest({
                 <option value={15}>15 minutes</option>
               </select>
             </label>
+
+            <div className="mt-2">
+              <label className="inline-flex items-center text-sm font-semibold text-muted">
+                <input
+                  type="checkbox"
+                  checked={allowBackspace}
+                  onChange={(e) => setAllowBackspace(e.target.checked)}
+                  className="mr-3 h-4 w-4 rounded border-surface-strong bg-surface-strong text-accent focus:ring-accent"
+                />
+                Enable Backspace during exam
+              </label>
+            </div>
           </div>
 
           <div className="mt-8 rounded-3xl bg-surface p-5 text-left text-sm text-muted ring-1 ring-surface">
             <p className="font-semibold text-foreground">Current selection</p>
             <p className="mt-3">{passage}</p>
             <p className="mt-1">Timer: {duration} minutes</p>
+            <p className="mt-1">Backspace: {allowBackspace ? "Enabled" : "Disabled"}</p>
           </div>
 
           <button
             type="button"
-            onClick={() => onBeginPractice(selectedPassageText, duration)}
+            onClick={() => onBeginPractice(selectedPassageText, duration, allowBackspace)}
             className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-accent px-6 py-3 text-sm font-semibold text-foreground transition hover:brightness-110 cursor-pointer"
           >
             Start practice now

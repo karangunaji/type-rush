@@ -8,14 +8,15 @@ import TypingTest from "@/components/TypingTest";
 type PracticeSettings = {
   passage: string;
   duration: number;
+  allowBackspace: boolean;
 };
 
 export default function BhcClerkPracticeTestPage() {
   const router = useRouter();
   const [practiceSettings, setPracticeSettings] = useState<PracticeSettings | null>(null);
 
-  const handleBeginPractice = (passage: string, duration: number) => {
-    setPracticeSettings({ passage, duration });
+  const handleBeginPractice = (passage: string, duration: number, allowBackspace: boolean) => {
+    setPracticeSettings({ passage, duration, allowBackspace });
   };
 
   const handleBack = () => {
@@ -31,6 +32,8 @@ export default function BhcClerkPracticeTestPage() {
             wordCount={400}
             durationMinutes={practiceSettings.duration}
             passage={practiceSettings.passage}
+            allowBackspace={practiceSettings.allowBackspace}
+            onBack={() => setPracticeSettings(null)}
           />
         ) : (
           <PracticeTest onBeginPractice={handleBeginPractice} onBack={handleBack} defaultExam="clerk" />
